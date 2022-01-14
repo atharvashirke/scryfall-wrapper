@@ -1,0 +1,8 @@
+Examples of functionality:
+
+>>>imoti = scryfall_wrapper.getCard("Imoti, Celebrant of Bounty")
+>>>print(imoti.name)
+Imoti Celebrant of Bounty 
+>>>print(imoti.cmc)
+>>>imoti.image("small")
+<<< jpg image object or something >>>
