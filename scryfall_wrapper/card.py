@@ -17,20 +17,27 @@ class Card:
 
     """
 
-    def __init__(self, query):
+    def __init__(self, query, method="search", params="q"):
         """
-        Constructor for a card object 
+        Constructor for a card object. 
 
         Arguments
         ---------
-            query (string): full-text string search query (similar to what you'd search in the scryfall search bar)
+            query (string): a search query. If default "method" argument is used, this string is
+                treated identically to a search on the scryfall search bar
+            method (string) [default: "search"]: type of method to use for lookup
+            params (string) [default: "q"]: parameter query is packaged in when method is called
         """
-        data = utils.get_request("cards/search", {"q": query})
+        if params is None and query is None:
+            data = utils.get_request("cards/" + method, None)
+        else:
+            data = utils.get_request("cards/" + method, {params: query})
         #Check if response is empty
         if data is None:
             raise ValueError
         else:
-            data = data["data"][0]
+            if data["object"] == "list":
+                data = data["data"][0]
 
             #Assigning core card field attributes
             # Cannot be declared dynamically due to risk
@@ -78,7 +85,6 @@ class Card:
             self.artist = data.get("artist")
             self.booster = data["booster"]
             self.border_color = data["border_color"]
-            self.card_back_id = data["card_back_id"]
             self.collector_number = data["collector_number"]
             self.content_warning = data.get("content_warning")
             self.digital = data["digital"]
@@ -126,7 +132,7 @@ class Card:
         Return a reference to an encoded image
         at the desired size.
         
-        Attributes
+        Arguments
         ----------
             option (str): Options for returned image [small, normal, large, art_crop, border_crop, png]
         Returns
@@ -135,3 +141,73 @@ class Card:
         """
         response = requests.get(self.image_uris[option])
         return response.content
+
+    def reprints(self):
+        """
+        Return a list of card objects that 
+        are reprints
+
+        Returns
+        -------
+            reprints (list): list of card objects
+        """
+        method = self.prints_search_uri.split("https://api.scryfall.com/")[1]
+        data_list = utils.get_request(method, None)["data"]
+        reprints = []
+        for reprint in data_list:
+            reprints.append(Card(None, reprint["id"], None))
+        return reprints
+
+    def price(self, currency="USD", foil=False, conv=False, conv_to=None):
+        """
+        Returns the price of a card in the given currency and card type.
+        
+        Arguments
+        ---------
+            currency (string) [default: "USD"]: Returns price in given currency
+                WARNING: Only supports "USD" and "EUR"
+            foil (boolean) [default: False]: Returns price if foil or not
+            conv (boolean) [default: False]: If true, converts price to 'conv_to' currency
+            conv_to (string) [default: "USD"]: If conv is true, converts to given currency
+        
+        Returns
+        -------
+            price (float): price of card in given market and currency (May return None if no price found)
+        """
+        if conv and conv_to:
+            exchange_rate = utils.get_exchange_rate(currency, conv_to)
+        elif conv or conv_to:
+            raise ValueError
+        else:
+            exchange_rate = None
+
+        currency = currency.lower()
+        foil_str = "_foil" if foil else ""
+        price = self.prices[currency + foil_str]
+
+        if price:
+            price = float(price) * (exchange_rate if exchange_rate else 1)
+
+        return price 
+
+    def legality(self, game_format="standard"):
+        """
+        Returns a string representing legality of card in given format.
+
+        Arguments
+        ---------
+            format (string)[default: "standard"]: string name of format to check legality in
+        
+        Returns
+        -------
+            is_legal (string): returns string representing legality in format
+        """
+        game_format = game_format.lower()
+        if self.legalities.get(game_format) is None:
+            return ValueError
+        if self.legalities.get(game_format) == "not_legal":
+            return "False"
+        elif self.legalities.get(game_format) == "restricted":
+            return "Restricted"
+        else:
+            return "True"

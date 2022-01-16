@@ -7,7 +7,7 @@ import time
 import json
 from datetime import datetime
 
-def get_request(method: str, params: dict):
+def get_request(method: str, params):
     """
     Function for making get requests to scryfall API. Manages
     rate limits for good citizenship. Returns contents of JSON response
@@ -15,14 +15,16 @@ def get_request(method: str, params: dict):
 
     Arguments
     ---------
-        params (dict): dictionary with parameters for API call
         method (str): method to be added to scryfall endpoint (https://api.scryfall.com/METHOD)
+        params (dict): dictionary with parameters for API call
     Returns
     -------
         content (dict): content of response
     """
-
-    response = requests.get("https://api.scryfall.com/" + method, params=params)
+    if params:
+        response = requests.get("https://api.scryfall.com/" + method, params=params)
+    else:
+        response = requests.get("https://api.scryfall.com/" + method)
     time.sleep(0.10)
     output = response.json()
     if output["object"] == "error":
@@ -63,3 +65,21 @@ def write_timestamped_file(dir_path_str, content, ftype=".json"):
         else:
             bdf.write(content)
     return path
+
+def get_exchange_rate(from_currency, to_currency):
+    """
+    Given two currencies, returns a float representing
+    the exchange rate. 
+        Parameters:
+            from_currency (string): abbreviated currency to exchange [ex:"USD"]
+            to_currency (string): abbreviated currency after conversion [ex: "EUR"]
+        Returns:
+            exchange_rate (float): rate of exchange for from_currency:to_currency
+    """
+    try:
+        response = requests.get("https://v6.exchangerate-api.com/v6/0e164fc6317a50745338c53e/latest/" + from_currency)
+    except requests.exceptions.HTTPError as err:
+        SystemExit(err)
+
+    exchange_rate = float(response.json()["conversion_rates"][to_currency])
+    return exchange_rate

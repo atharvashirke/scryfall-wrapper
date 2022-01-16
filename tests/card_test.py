@@ -20,5 +20,11 @@ class CardTestCase(unittest.TestCase):
         """
         self.assertRaises(ValueError, Card, "jdsfahjsdhfasjdh")
 
+    def test_price(self):
+        """
+        Test if price method returns expected type
+        """
+        self.assertIsInstance(self.a_card.price(), float)
+
 if __name__ == "__main__":
     unittest.main()
