@@ -1,7 +1,9 @@
 from . import utils
+from .card_face import Card_Face
+from .ruling import Ruling
 import requests
 
-class Card:
+class Card(Card_Face):
     """
     A class used to represent a card in Magic the Gathering
 
@@ -16,6 +18,7 @@ class Card:
     -------
 
     """
+    object = "Card"
 
     def __init__(self, query, method="search", params="q"):
         """
@@ -59,7 +62,14 @@ class Card:
 
             #Gameplay Fields
             self.all_parts = data.get("all_parts")
+
             self.card_faces = data.get("card_faces")
+            if self.card_faces:
+                card_faces = []
+                for face in self.card_faces:
+                    card_faces.append(Card_Face(face)) 
+                self.card_faces = card_faces
+
             self.cmc = data["cmc"]
             self.color_identity = data["color_identity"]
             self.color_indicator = data.get("color_indicator")
@@ -126,21 +136,6 @@ class Card:
             self.previewed_at = data.get("preview.previewed_at")
             self.preview_source_uri = data.get("preview.source_uri")
             self.preview_source = data.get("preview.source")
-        
-    def image(self, option="normal"):
-        """
-        Return a reference to an encoded image
-        at the desired size.
-        
-        Arguments
-        ----------
-            option (str): Options for returned image [small, normal, large, art_crop, border_crop, png]
-        Returns
-        -------
-            encoded_img (bytes): encoded image data
-        """
-        response = requests.get(self.image_uris[option])
-        return response.content
 
     def reprints(self):
         """
@@ -211,3 +206,37 @@ class Card:
             return "Restricted"
         else:
             return "True"
+
+    def rulings(self):
+        """
+        Returns a list of Ruling objects constructed
+        with rulings data of the card.
+        
+        Arguments
+        ---------
+            None
+
+        Returns
+        -------
+            rulings_list (list): list of Ruling objects
+        """
+        method = self.rulings_uri.split("https://api.scryfall.com/")[1]
+        data_list = utils.get_request(method, None)["data"]
+        
+        if len(data_list) == 0:
+            return []
+
+        rulings_list = []
+
+        for data in data_list:
+            ruling = Ruling(data)
+            rulings_list.append(ruling)
+        
+        return rulings_list
+
+
+    def __str__(self):
+        return self.name + " (" + self.set + ")"
+
+    def __repr__(self):
+        return str(self) + " [ID:" + self.id + "]"

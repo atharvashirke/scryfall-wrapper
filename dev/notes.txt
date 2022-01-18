@@ -6,3 +6,6 @@ Imoti Celebrant of Bounty
 >>>print(imoti.cmc)
 >>>imoti.image("small")
 <<< jpg image object or something >>>
+
+Currently need to work on:
+- class for set objects 

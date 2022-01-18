@@ -16,7 +16,8 @@ def get_request(method: str, params):
     Arguments
     ---------
         method (str): method to be added to scryfall endpoint (https://api.scryfall.com/METHOD)
-        params (dict): dictionary with parameters for API call
+        params (dict): dictionary with parameters for API call. If none, no parameters are added
+            to the request.
     Returns
     -------
         content (dict): content of response
@@ -28,6 +29,7 @@ def get_request(method: str, params):
     time.sleep(0.10)
     output = response.json()
     if output["object"] == "error":
+        print(output)
         return None
     return response.json()
 

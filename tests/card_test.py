@@ -1,5 +1,7 @@
 import unittest
 from scryfall_wrapper.card import Card
+from scryfall_wrapper.utils import write_timestamped_file
+import imghdr
 
 class CardTestCase(unittest.TestCase):
 
@@ -25,6 +27,13 @@ class CardTestCase(unittest.TestCase):
         Test if price method returns expected type
         """
         self.assertIsInstance(self.a_card.price(), float)
+    
+    def test_image(self):
+        """
+        Test if image method returns valid image file
+        """
+        image = write_timestamped_file("dev/", self.a_card.image(), ".jpg")
+        self.assertEquals(imghdr.what(image), "jpeg")
 
 if __name__ == "__main__":
     unittest.main()
