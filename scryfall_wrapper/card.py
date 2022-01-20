@@ -1,6 +1,7 @@
 from . import utils
 from .card_face import Card_Face
 from .ruling import Ruling
+from .card_set import Card_Set
 import requests
 
 class Card(Card_Face):
@@ -233,6 +234,22 @@ class Card(Card_Face):
             rulings_list.append(ruling)
         
         return rulings_list
+
+    def card_set(self):
+        """
+        Returns a Set object the card belongs to 
+
+        Arguments
+        ---------
+            None
+
+        Returns
+        -------
+            set (Card_Set): set card belongs to
+        """
+        return Card_Set(self.set)
+
+
 
 
     def __str__(self):
