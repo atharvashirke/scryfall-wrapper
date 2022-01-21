@@ -12,39 +12,63 @@ class Card(Card_Face):
 
     Attributes
     ----------
-    name : str
-        the name of the card
+    Full list can be found at: https://scryfall.com/docs/api/cards.
 
     Methods
     -------
+    reprints()
+        Returns a list of Card objects representing reprints of card
+    price(currency="USD", foil=False, conv=False, conv_to=None):
+        Returns float representing price of card. Provided conv=True and
+        conv_to value to return float of converted price of card
+    legality(game_format="standard")
+        Returns string representing legality of card in given format
+    rulings()
+        Returns list of ruling objects applicable to card
+    card_set()
+        Returns Card_Set card belongs in
 
     """
     object = "Card"
 
-    def __init__(self, query, method="search", params="q"):
+    def __init__(self, query, method="search", params="q", data=None):
         """
         Constructor for a card object. 
 
-        Arguments
+        Main Usage:
+        Card("Mana Crypt") - Simply add your usual scryfall search into constructor to get card
+
+        Parameters
         ---------
-            query (string): a search query. If default "method" argument is used, this string is
-                treated identically to a search on the scryfall search bar
-            method (string) [default: "search"]: type of method to use for lookup
-            params (string) [default: "q"]: parameter query is packaged in when method is called
+        query : str
+            A search query. If default "method" argument is used, this string is
+            treated identically to a search on the scryfall search bar
+        method : str, optional
+            String representing the method to used to make request from scryfall API. 
+            (default is 'search')
+        params : str, optional
+            String representing the parameter query is packaged in when method is called.
+            (default is 'q')
+        data : dict, optional
+            Dictionary used for alternate construction of object using dictionary
+            representing json data
+            (default is None)
         """
-        if params is None and query is None:
-            data = utils.get_request("cards/" + method, None)
-        else:
-            data = utils.get_request("cards/" + method, {params: query})
-        #Check if response is empty
+        # If data is not given, get attribute value from scyfall API request
+        if data is None:
+            if params is None and query is None:
+                data = utils.get_request("cards/" + method, None)
+            else:
+                data = utils.get_request("cards/" + method, {params: query})
+        # If data is not given or cannot be fetched, raise error
         if data is None:
             raise ValueError
         else:
+            # Unpackage list if passed
             if data["object"] == "list":
                 data = data["data"][0]
 
-            #Assigning core card field attributes
-            # Cannot be declared dynamically due to risk
+            # Populate Core Card Attributes
             self.arena_id = data.get("arena_id")
             self.id = data["id"]
             self.lang = data["lang"]
@@ -61,7 +85,7 @@ class Card(Card_Face):
             self.uri = data["uri"]
 
 
-            #Gameplay Fields
+            # Populate Card Gameplay Fields
             self.all_parts = data.get("all_parts")
 
             self.card_faces = data.get("card_faces")
@@ -92,7 +116,7 @@ class Card(Card_Face):
             self.toughness = data.get("toughness")
             self.type_line = data["type_line"]
 
-            #Print fields
+            # Populate Card Print Fields
             self.artist = data.get("artist")
             self.booster = data["booster"]
             self.border_color = data["border_color"]
@@ -140,12 +164,12 @@ class Card(Card_Face):
 
     def reprints(self):
         """
-        Return a list of card objects that 
-        are reprints
+        Return a list of card objects that are reprints
 
         Returns
         -------
-            reprints (list): list of card objects
+        reprints : list
+            Returns a list of Card objects.
         """
         method = self.prints_search_uri.split("https://api.scryfall.com/")[1]
         data_list = utils.get_request(method, None)["data"]
@@ -154,35 +178,46 @@ class Card(Card_Face):
             reprints.append(Card(None, reprint["id"], None))
         return reprints
 
-    def price(self, currency="USD", foil=False, conv=False, conv_to=None):
+    def price(self, currency="USD", foil=False, conv_to=None):
         """
         Returns the price of a card in the given currency and card type.
         
         Arguments
         ---------
-            currency (string) [default: "USD"]: Returns price in given currency
-                WARNING: Only supports "USD" and "EUR"
-            foil (boolean) [default: False]: Returns price if foil or not
-            conv (boolean) [default: False]: If true, converts price to 'conv_to' currency
-            conv_to (string) [default: "USD"]: If conv is true, converts to given currency
+        currency : str
+            Abbreviated 3 letter string representing currency (default is 'USD')
+        foil : bool
+            Represents if price is for foil or non-foil variant (default is False)
+        conv : bool
+            Represents if price needs conversion 
+        conv_to : string
+            Converts to given 3 letter abbreviated currency. If none, no conversion occurs
+            (default is None)
         
         Returns
         -------
-            price (float): price of card in given market and currency (May return None if no price found)
+        price : float
+            Returns price of card in given market and currency (May return None if no price found)
         """
-        if conv and conv_to:
+
+        if conv_to:
             exchange_rate = utils.get_exchange_rate(currency, conv_to)
-        elif conv or conv_to:
-            raise ValueError
         else:
             exchange_rate = None
 
         currency = currency.lower()
         foil_str = "_foil" if foil else ""
         price = self.prices[currency + foil_str]
-
+        
+        # If price can't be found, return None
         if price:
-            price = float(price) * (exchange_rate if exchange_rate else 1)
+            price = float(price)
+        else:
+            return None
+
+        # Calculate price after exchange rate
+        if exchange_rate:
+            price = price * exchange_rate
 
         return price 
 
@@ -192,16 +227,21 @@ class Card(Card_Face):
 
         Arguments
         ---------
-            format (string)[default: "standard"]: string name of format to check legality in
+        game_format : str
+            String name of format to check legality in (default is 'standard')
         
         Returns
         -------
-            is_legal (string): returns string representing legality in format
+        is_legal : str 
+            Returns string representing legality in format
         """
+
         game_format = game_format.lower()
+
+        # If game format doesn't exist, raise error
         if self.legalities.get(game_format) is None:
-            return ValueError
-        if self.legalities.get(game_format) == "not_legal":
+            raise ValueError
+        if self.legalities.get(game_format) == "not_legal" or self.legalities.get(game_format) == "banned":
             return "False"
         elif self.legalities.get(game_format) == "restricted":
             return "Restricted"
@@ -210,17 +250,14 @@ class Card(Card_Face):
 
     def rulings(self):
         """
-        Returns a list of Ruling objects constructed
-        with rulings data of the card.
-        
-        Arguments
-        ---------
-            None
+        Returns a list of Ruling objects constructed with rulings data of the card.
 
         Returns
         -------
-            rulings_list (list): list of Ruling objects
+        rulings_list : list
+            Returns a list of Ruling objects
         """
+
         method = self.rulings_uri.split("https://api.scryfall.com/")[1]
         data_list = utils.get_request(method, None)["data"]
         
@@ -237,23 +274,18 @@ class Card(Card_Face):
 
     def card_set(self):
         """
-        Returns a Set object the card belongs to 
-
-        Arguments
-        ---------
-            None
+        Returns a Set object the card belongs to.
 
         Returns
         -------
-            set (Card_Set): set card belongs to
+        set : Card_Set
+            Returns a Card_Set object representing the set card belongs to
         """
         return Card_Set(self.set)
 
 
-
-
     def __str__(self):
-        return self.name + " (" + self.set + ")"
+        return self.name + " (" + self.set.upper() + ")"
 
     def __repr__(self):
         return str(self) + " [ID:" + self.id + "]"

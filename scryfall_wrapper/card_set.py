@@ -76,16 +76,27 @@ class Card_Set():
         -------
             cards (list): List of card objects
         """
+        has_more = True
         method = self.search_uri.split("https://api.scryfall.com/")[1]
-        data_list= utils.get_request(method, None)["data"]
+        data_list = []
+
+        while has_more:
+            page = utils.get_request(method, None)
+            has_more = page["has_more"]
+            next_page = page.get("next_page")
+            data = page["data"]
+            data_list.extend(data)
+            if next_page:
+                method = next_page.split("https://api.scryfall.com/")[1]
+
         cards = []
         for data in data_list:
-            cards.append(card.Card(None, data["id"], None))
+            cards.append(card.Card(None, None, None, data))
         return cards
 
     def __str__(self):
-        return self.name + " (" + self.code + ")"
+        return self.name + " (" + self.code.upper() + ")"
 
     def __repr__(self):
-        return "Card Set Object (" + self.code + ")"
+        return "Card_Set Object (" + self.code.upper() + ")"
 
