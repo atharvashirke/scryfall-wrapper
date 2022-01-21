@@ -1,3 +1,7 @@
+"""
+Class File for representing a card.
+"""
+
 from . import utils
 from .card_face import Card_Face
 from .ruling import Ruling
@@ -182,14 +186,12 @@ class Card(Card_Face):
         """
         Returns the price of a card in the given currency and card type.
         
-        Arguments
+        Parameters
         ---------
         currency : str
             Abbreviated 3 letter string representing currency (default is 'USD')
         foil : bool
             Represents if price is for foil or non-foil variant (default is False)
-        conv : bool
-            Represents if price needs conversion 
         conv_to : string
             Converts to given 3 letter abbreviated currency. If none, no conversion occurs
             (default is None)
@@ -200,12 +202,13 @@ class Card(Card_Face):
             Returns price of card in given market and currency (May return None if no price found)
         """
 
+        currency = currency.lower()
+
         if conv_to:
             exchange_rate = utils.get_exchange_rate(currency, conv_to)
         else:
             exchange_rate = None
 
-        currency = currency.lower()
         foil_str = "_foil" if foil else ""
         price = self.prices[currency + foil_str]
         
@@ -225,7 +228,7 @@ class Card(Card_Face):
         """
         Returns a string representing legality of card in given format.
 
-        Arguments
+        Parameters
         ---------
         game_format : str
             String name of format to check legality in (default is 'standard')
@@ -261,6 +264,7 @@ class Card(Card_Face):
         method = self.rulings_uri.split("https://api.scryfall.com/")[1]
         data_list = utils.get_request(method, None)["data"]
         
+        # If no rulings are found, return empty list
         if len(data_list) == 0:
             return []
 

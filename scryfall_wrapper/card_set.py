@@ -2,6 +2,7 @@
 Class for Set objects representing a group
 of related magic cards
 """
+
 from . import utils
 from . import card
 
@@ -14,13 +15,14 @@ class Card_Set():
 
     Attributes
     ----------
-    name : str
-        the name of the card
+    A full list of attributes can be found at https://scryfall.com/docs/api/sets.
 
     Methods
     -------
-
+    cards()
+        Return a list of Card objects for cards in the set. 
     """
+
     object = "Card_Set"
 
     def __init__(self, set_code: str):
@@ -42,6 +44,7 @@ class Card_Set():
         if data is None:
             raise ValueError
         
+        # Assign core fields from data
         self.id = data["id"]
         self.code = data["code"]
         self.mtgo_code = data.get("mtgo_code")
@@ -65,21 +68,19 @@ class Card_Set():
 
     def cards(self):
         """
-        Return a list of Card objects for cards
-        in the set. 
+        Return a list of Card objects for cards in the set. 
 
-        Arguments
-        ---------
-            None
-        
         Returns
         -------
-            cards (list): List of card objects
+        cards : list
+            List of card objects representing cards in the set
         """
+        
         has_more = True
         method = self.search_uri.split("https://api.scryfall.com/")[1]
         data_list = []
 
+        # Continue filling data_list until all pages of data have been parsed
         while has_more:
             page = utils.get_request(method, None)
             has_more = page["has_more"]
@@ -90,8 +91,11 @@ class Card_Set():
                 method = next_page.split("https://api.scryfall.com/")[1]
 
         cards = []
+
+        # Create and append card objects to cards
         for data in data_list:
             cards.append(card.Card(None, None, None, data))
+
         return cards
 
     def __str__(self):

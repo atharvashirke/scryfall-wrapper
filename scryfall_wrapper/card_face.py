@@ -4,21 +4,37 @@ Class file representing the face of a card.
 import requests
 
 class Card_Face():
+    """
+    A class used to represent the face of a card in Magic the Gathering.
+
+    Mainly used for internal use, Card_Face objects represent the many 
+    sides of special MTG cards (dual face cards, split cards, MDFCs, etc.)
+
+    Attributes
+    ----------
+    Full list can be found at: https://scryfall.com/docs/api/cards.
+
+    Methods
+    -------
+    image(option="normal")
+        Return a reference to an encoded image at the desired size.
+
+    """
 
     object = 'Card_Face'
 
-    def __init__(self, data: dict):
+    def __init__(self, data):
         """
         Constructor for a Card_Face object.
 
-        Arguments
+        Parameters
         ---------
-            data (dict): dictionary of values from scryfall API used to construct card_face object
+        data : dict
+            A dictionary of values from scryfall API used to construct card_face object
 
-        Returns
-        -------
-            None
         """
+
+        # Assign fields from data
         self.artist = data.get("artist")
         self.cmc = data.get("cmc")
         self.color_indicator = data.get("color_indicator")
@@ -41,16 +57,21 @@ class Card_Face():
 
     def image(self, option="normal"):
         """
-        Return a reference to an encoded image
-        at the desired size.
+        Return a reference to an encoded image at the desired size.
         
-        Arguments
+        Parameters
         ----------
-            option (str): Options for returned image [small, normal, large, art_crop, border_crop, png]
+        option : str 
+            String representing desired size/format of image 
+            ex: [small, normal, large, art_crop, border_crop, png]
+
         Returns
         -------
-            encoded_img (bytes): encoded image data
+        encoded_img : byte
+            Encoded image data
         """
+
+        # If invalid option is passed, raise ValueError
         if option not in self.image_uris.keys():
             raise ValueError
 
