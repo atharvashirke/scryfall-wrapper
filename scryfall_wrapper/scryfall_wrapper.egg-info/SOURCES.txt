@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+setup.py
+scryfall_wrapper/scryfall_wrapper.egg-info/PKG-INFO
+scryfall_wrapper/scryfall_wrapper.egg-info/SOURCES.txt
+scryfall_wrapper/scryfall_wrapper.egg-info/dependency_links.txt
+scryfall_wrapper/scryfall_wrapper.egg-info/top_level.txt
