@@ -1,7 +1,7 @@
 
 # scryfall_wrapper
 
-The easiest way to get fresh data on every Magic TCG for your software in a simple and intuitive way.
+The easiest way to get fresh data on every Magic the Gathering card for your software in a simple and intuitive way.
 
 
 
